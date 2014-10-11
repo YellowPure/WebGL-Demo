@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>WebGL case</title>
+<style type="text/css">
+	video{display: none;}
+</style>
+<script id='shader-fs' type="x-shader/x-fragment">
+	// varying lowp vec4 vColor;
+
+	varying highp vec2 vTextureCoord;
+	varying highp vec3 vLighting;
+	uniform sampler2D uSampler;
+
+	void main(void){
+		mediump vec4 texelColor=texture2D(uSampler,vec2(vTextureCoord.s,vTextureCoord.t));
+		gl_FragColor=vec4(texelColor.rgb*vLighting,texelColor.a);
+	}
+</script>
+<script id='shader-vs' type="x-shader/x-vertex">
+	attribute vec3 aVertexNormal;
+	attribute vec3 aVertexPosition;
+	attribute vec2 aTextureCoord;
+
+	uniform mat4 uMVMatrix;
+	uniform mat4 uPMatrix;
+	uniform mat4 uNormalMatrix;
+
+	// varying lowp vec4 vColor;
+	varying highp vec2 vTextureCoord;
+	varying highp vec3 vLighting;
+
+	void main(void){
+		gl_Position=uPMatrix*uMVMatrix*vec4(aVertexPosition,1.0);
+		// vColor=aVertexColor;
+		vTextureCoord=aTextureCoord;
+
+		//Apply lighting effect
+		highp vec3 ambientLight=vec3(0.6,0.6,0.6);
+		highp vec3 directionalLightColor=vec3(0.5,0.5,0.75);
+		highp vec3 directionalVector=vec3(0.85,0.8,0.75);
+
+		highp vec4 transformedNormal=uNormalMatrix*vec4(aVertexNormal,1.0);
+
+		highp float directional=max(dot(transformedNormal.xyz,directionalVector),0.0);
+		vLighting=ambientLight+(directionalLightColor*directional);
+	}
+</script>
+<script type="text/javascript" src='sylvester.js'></script>
+<script type="text/javascript" src='glUtils.js'></script>
+<script type="text/javascript" src='webgl-demo-texture.js'></script>
+</head>
+<body onload='init();'>
+<div>
+	<canvas id='cv' width='640px' height='480px'></canvas>
+</div>
+<video id='video'>Your browser doesn't appear to support the HTML5 element.</video>
+</body>
+</html>
