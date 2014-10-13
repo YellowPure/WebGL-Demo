@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>WebGL case</title>
+<style type="text/css">
+	video{display: none;}
+</style>
+<script id='shader-fs' type="x-shader/x-fragment">
+	void main(void){
+		gl_FragColor=vec4(1,1,1,1);
+	}
+</script>
+<script id='shader-vs' type="x-shader/x-vertex">
+	attribute vec3 aVertexPosition;
+
+	uniform mat4 uMVMatrix;
+	uniform mat4 uPMatrix;
+
+	void main(void){
+		gl_Position=uPMatrix*uMVMatrix*vec4(aVertexPosition,1.0);
+	}
+</script>
+<script type="text/javascript" src='sylvester.js'></script>
+<script type="text/javascript" src='glUtils.js'></script>
+<script type="text/javascript" src='webgl-demo-cube.js'></script>
+</head>
+<body onload='init();'>
+<div>
+	<canvas id='cv' width='640px' height='480px'></canvas>
+</div>
+<video id='video'>Your browser doesn't appear to support the HTML5 element.</video>
+</body>
+</html>

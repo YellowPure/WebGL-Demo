@@ -13,7 +13,7 @@ var vertexPositionAttribute;
 // var squareVerticesBuffer;
 var perspectiveMatrix;
 // var squareVerticesColorBuffer;
-var vertexColorAttribute;
+var vertexAttribute;
 var lastSquareUpdateTime;
 var cubeVerticesBuffer;
 var cubeVerticesColorBuffer;
@@ -42,37 +42,11 @@ function drawScene(){
 	loadIdentity();
 	mvTranslate([0,0,-6]);
 
-	mvPushMatrix();
-	mvRotate(squareRotation,[1,0,1]);
-	mvTranslate([squareXOffset,squareYOffset,squareZOffset]);
-
 	gl.bindBuffer(gl.ARRAY_BUFFER,cubeVerticesBuffer);
 	gl.vertexAttribPointer(vertexPositionAttribute,3,gl.FLOAT,false,0,0);
 
-	gl.bindBuffer(gl.ARRAY_BUFFER,cubeVerticesColorBuffer);
-	gl.vertexAttribPointer(vertexColorAttribute,4,gl.FLOAT,false,0,0);
-
-	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,cubeVerticesIndexBuffer);
 	setMatrixUniforms();
-	// gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
-	gl.drawElements(gl.TRIANGLES,36,gl.UNSIGNED_SHORT,0);
-	mvPopMatrix();
-	var currentTime=(new Date).getTime();
-	if(lastSquareUpdateTime){
-		var delta=currentTime-lastSquareUpdateTime;
-
-		squareRotation+=(30*delta)/1000;
-		squareXOffset+=xIncValue*(30*delta)/1000;
-		squareYOffset+=yIncValue*(30*delta)/1000;
-		squareZOffset+=zIncValue*(30*delta)/1000;
-
-		if(Math.abs(squareYOffset)>2.5){
-			xIncValue=-xIncValue;
-			yIncValue=-yIncValue;
-			zIncValue=-zIncValue;
-		}
-	}
-	lastSquareUpdateTime=currentTime;
+	gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
 
 	requestAnimationFrame(drawScene);
 }
@@ -125,83 +99,13 @@ function initBuffers(){
 	cubeVerticesBuffer=gl.createBuffer();
 	gl.bindBuffer(gl.ARRAY_BUFFER,cubeVerticesBuffer);
 	var vertices=[
-		//front face
-		-1,-1,1,
-		1,-1,1,
-		1,1,1,
-		-1,1,1,
-
-		//back face
-		-1,-1,-1,
-		-1,1,-1,
-		1,1,-1,
-		1,-1,-1,
-
-		//top face
-		-1,1,-1,
-		-1,1,1,
-		1,1,1,
-		1,1,-1,
-
-		//bottom face
-		-1,-1,-1,
-		1,-1,-1,
-		1,-1,1,
-		-1,-1,1,
-
-		//left face
-		-1,1,1,
-		-1,1,-1,
-		-1,-1,-1,
-		-1,-1,1,
-
-		//right face
-		1,1,1,
-		1,1,-1,
-		1,-1,-1,
-		1,-1,1
+		1,1,0,
+		-1,1,0,
+		1,-1,0,
+		-1,-1,0
 	]
 	gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(vertices),gl.STATIC_DRAW);
 
-	var colors=[
-		[1,1,1,1],
-		[1,0,0,1],
-		[0,1,0,1],
-		[0,0,1,1],
-		[1,1,0,1],
-		[1,0,1,1]
-	];
-
-	var generatedColors=[];
-
-	for(j=0;j<6;j++){
-		var c=colors[j];
-		for(i=0;i<4;i++){
-			generatedColors=generatedColors.concat(c);
-		}
-	}
-	// console.log('generatedColors:',generatedColors);
-	cubeVerticesColorBuffer=gl.createBuffer();
-	gl.bindBuffer(gl.ARRAY_BUFFER,cubeVerticesColorBuffer);
-	gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(generatedColors),gl.STATIC_DRAW);
-
-	cubeVerticesIndexBuffer=gl.createBuffer();
-	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,cubeVerticesIndexBuffer);
-	var cubeVertexIndices=[
-		0,  1,  2,      0,  2,  3,    // front
-	    4,  5,  6,      4,  6,  7,    // back
-	    8,  9,  10,     8,  10, 11,   // top
-	    12, 13, 14,     12, 14, 15,   // bottom
-	    16, 17, 18,     16, 18, 19,   // right
-	    20, 21, 22,     20, 22, 23    // left
-	]
-	
-	
-	gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,new Uint16Array(cubeVertexIndices),gl.STATIC_DRAW);
-	
-	
-
-	
 }
 
 function initShaders(){
@@ -214,7 +118,7 @@ function initShaders(){
 	gl.linkProgram(shaderProgram);
 
 	if(!gl.getProgramParameter(shaderProgram,gl.LINK_STATUS)){
-		alert('unable to initialize the shader program');
+		console.log('unable to initialize the shader program');
 	}
 
 	gl.useProgram(shaderProgram);
@@ -222,8 +126,7 @@ function initShaders(){
 	vertexPositionAttribute=gl.getAttribLocation(shaderProgram,'aVertexPosition');
 	gl.enableVertexAttribArray(vertexPositionAttribute);
 
-	vertexColorAttribute=gl.getAttribLocation(shaderProgram,'aVertexColor');
-	gl.enableVertexAttribArray(vertexColorAttribute);
+
 }
 
 function getShader(gl,id){
@@ -257,7 +160,7 @@ function getShader(gl,id){
 	gl.compileShader(shader);
 
 	if(!gl.getShaderParameter(shader,gl.COMPILE_STATUS)){
-		alert('an error occurred compiling the shaders:'+gl.getShaderInfoLog(shader));
+		console.log('an error occurred compiling the shaders:'+gl.getShaderInfoLog(shader));
 		return null;
 	}
 	return shader;
