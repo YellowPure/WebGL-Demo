@@ -12,6 +12,7 @@ var shaderProgram;
 var vertexPositionAttribute;
 // var squareVerticesBuffer;
 var perspectiveMatrix;
+var vertexColorAttribute;
 // var squareVerticesColorBuffer;
 var vertexAttribute;
 var lastSquareUpdateTime;
@@ -34,22 +35,7 @@ function init(){
 		drawScene();
 	}
 }
-function drawScene(){
-	gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
 
-	perspectiveMatrix=makePerspective(45,640/480,0.1,100);
-
-	loadIdentity();
-	mvTranslate([0,0,-6]);
-
-	gl.bindBuffer(gl.ARRAY_BUFFER,cubeVerticesBuffer);
-	gl.vertexAttribPointer(vertexPositionAttribute,3,gl.FLOAT,false,0,0);
-
-	setMatrixUniforms();
-	gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
-
-	requestAnimationFrame(drawScene);
-}
 
 function mvPushMatrix(m){
 	if(m){
@@ -94,6 +80,28 @@ function setMatrixUniforms(){
 	var mvUniform=gl.getUniformLocation(shaderProgram,'uMVMatrix');
 	gl.uniformMatrix4fv(mvUniform,false,new Float32Array(mvMatrix.flatten()));
 }
+function drawScene(){
+	gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
+
+	perspectiveMatrix=makePerspective(45,640/480,0.1,100);
+
+	loadIdentity();
+
+
+	mvTranslate([-0,0,-6]);
+	// mvRotate(1,[10,0,1]);
+	// gl.viewport(0,0,640,480);
+	gl.bindBuffer(gl.ARRAY_BUFFER,cubeVerticesBuffer);
+	gl.vertexAttribPointer(vertexPositionAttribute,3,gl.FLOAT,false,0,0);
+	gl.bindBuffer(gl.ARRAY_BUFFER,cubeVerticesColorBuffer);
+	gl.vertexAttribPointer(vertexColorAttribute,4,gl.FLOAT,false,0,0);
+
+
+	setMatrixUniforms();
+	gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
+
+	requestAnimationFrame(drawScene);
+}
 
 function initBuffers(){
 	cubeVerticesBuffer=gl.createBuffer();
@@ -106,6 +114,15 @@ function initBuffers(){
 	]
 	gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(vertices),gl.STATIC_DRAW);
 
+	cubeVerticesColorBuffer=gl.createBuffer();
+	var colors=[
+		1,0,0,1,
+		0,1,0,1,
+		0,0,1,1,
+		0,0,0,1
+	]
+	gl.bindBuffer(gl.ARRAY_BUFFER,cubeVerticesColorBuffer);
+	gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(colors),gl.STATIC_DRAW);
 }
 
 function initShaders(){
@@ -126,7 +143,8 @@ function initShaders(){
 	vertexPositionAttribute=gl.getAttribLocation(shaderProgram,'aVertexPosition');
 	gl.enableVertexAttribArray(vertexPositionAttribute);
 
-
+	vertexColorAttribute=gl.getAttribLocation(shaderProgram,'aVertexColor');
+	gl.enableVertexAttribArray(vertexColorAttribute);
 }
 
 function getShader(gl,id){

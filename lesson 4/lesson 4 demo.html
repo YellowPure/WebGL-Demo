@@ -4,11 +4,10 @@
 <meta charset="utf-8">
 <title>WebGL case</title>
 <style type="text/css">
-	video{display: none;}
 </style>
 <script id='shader-fs' type="x-shader/x-fragment">
+	precision mediump float;
 	varying lowp vec4 vColor;
-
 	void main(void){
 		gl_FragColor=vColor;
 	}
@@ -23,13 +22,12 @@
 	varying lowp vec4 vColor;
 
 	void main(void){
-		vColor=aVertexColor;
 		gl_Position=uPMatrix*uMVMatrix*vec4(aVertexPosition,1.0);
+		vColor=aVertexColor;
 	}
 </script>
-<script type="text/javascript" src='sylvester.js'></script>
-<script type="text/javascript" src='glUtils.js'></script>
-<script type="text/javascript" src='webgl-demo-cube.js'></script>
+<script type="text/javascript" src="../glMatrix-0.9.5.min.js"></script>
+<script type="text/javascript" src="lesson4Demo.js"></script>
 </head>
 <body onload='init();'>
 <div>
