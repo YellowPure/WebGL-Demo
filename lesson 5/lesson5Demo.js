@@ -25,6 +25,7 @@ function init(){
 
 		initShaders();
 
+		initTexture();
 		initBuffers();
 		drawScene();
 	}
@@ -72,6 +73,30 @@ function initShaders(){
 	gl.enableVertexAttribArray(vertexColorAttribute);
 
 
+}
+
+function initTexture(){
+	loadImg(function(img){
+		var texture=gl.createTexture();
+		
+		gl.bindTexture(gl.TEXTURE_2D,texture);
+		gl.pixelStorei(gl.UNPACK_FILP_Y_WEBGL.true);
+		gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,img);
+		gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.NEARST);
+		gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.NEARST);
+		gl.bindTexture(gl.TEXTURE_2D,null);
+	});
+}
+
+function loadImg(callback){
+	if(typeof callback!="function"){
+		return ;
+	}
+	var img=new Image();
+	img.src='item.gif';
+	img.onload=function(){
+		callback(img);
+	}
 }
 function initBuffers(){
 	initFloorBuffers();

@@ -441,7 +441,7 @@ Matrix.prototype = {
   // col(1) on the result.
   multiply: function(matrix) {
     if (!matrix.elements) {
-      return this.map(function(x) { return x * matrix; });
+      return this.map(functio;n(x) { return x * matrix; });
     }
     var returnVector = matrix.modulus ? true : false;
     var M = matrix.elements || matrix;
