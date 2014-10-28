@@ -11,6 +11,13 @@ var cubeVertexIndexBuffer;
 var cubeVertexColorBuffer;
 var vertexColorAttribute;
 var vertexPositionAttribute;
+var floorVertorTextureCoordinateBuffer;
+var uniformSamplerLoc;
+var vertexTextureAttributeLoc;
+var cubeVertorTextureCoordinateBuffer
+var floorTexture;
+var woodTexture;
+var cubeTexture;
 
 function init(){
 	var cv=document.getElementById('cv');
@@ -25,8 +32,8 @@ function init(){
 
 		initShaders();
 
-		initTexture();
 		initBuffers();
+		initTexture();
 		drawScene();
 	}
 }
@@ -69,38 +76,46 @@ function initShaders(){
 	vertexPositionAttribute=gl.getAttribLocation(shaderProgram,'aVertexPosition');
 	gl.enableVertexAttribArray(vertexPositionAttribute);
 
-	vertexColorAttribute=gl.getAttribLocation(shaderProgram,'aVertexColor');
-	gl.enableVertexAttribArray(vertexColorAttribute);
+	// vertexColorAttribute=gl.getAttribLocation(shaderProgram,'aVertexColor');
+	// gl.enableVertexAttribArray(vertexColorAttribute);
 
+	
+	// gl.activeTexture(gl.TEXTURE0);
 
+	vertexTextureAttributeLoc=gl.getAttribLocation(shaderProgram,'aTextureCoordinates');
+	gl.enableVertexAttribArray(vertexTextureAttributeLoc);
 }
 
 function initTexture(){
-	loadImg(function(img){
-		var texture=gl.createTexture();
-		
-		gl.bindTexture(gl.TEXTURE_2D,texture);
-		gl.pixelStorei(gl.UNPACK_FILP_Y_WEBGL.true);
-		gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,img);
-		gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.NEARST);
-		gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.NEARST);
-		gl.bindTexture(gl.TEXTURE_2D,null);
-	});
+	floorTexture=gl.createTexture();
+	setTexture('wood_floor_256.jpg',floorTexture);
+
+	woodTexture=gl.createTexture();
+	setTexture('wood_128x128.jpg',woodTexture);
+
+	cubeTexture=gl.createTexture();
+	setTexture('wicker_256.jpg',cubeTexture);
 }
 
-function loadImg(callback){
-	if(typeof callback!="function"){
-		return ;
-	}
+function setTexture(imgSrc,texture){
 	var img=new Image();
-	img.src='item.gif';
+	img.src=imgSrc;
 	img.onload=function(){
-		callback(img);
+		gl.bindTexture(gl.TEXTURE_2D,texture);
+		gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,true);
+		gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,img);
+		gl.generateMipmap(gl.TEXTURE_2D);
+		gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
+		gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);
+		gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.MIRRORED_REPEAT);
+		gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.MIRRORED_REPEAT);
+		gl.bindTexture(gl.TEXTURE_2D,null);
 	}
 }
 function initBuffers(){
 	initFloorBuffers();
 	initCubeBuffers();
+	initTextureBuffers();
 }
 
 function initFloorBuffers(){
@@ -115,6 +130,18 @@ function initFloorBuffers(){
 	gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(floorPosition),gl.STATIC_DRAW);
 	floorVertexPositionBuffer.itemSize=3;
 	floorVertexPositionBuffer.numberOfItems=4;
+
+	floorVertorTextureCoordinateBuffer=gl.createBuffer();
+	gl.bindBuffer(gl.ARRAY_BUFFER,floorVertorTextureCoordinateBuffer);
+	var textureCoordinates=[
+		2,0,
+		2,2,
+		0,2,
+		0,0
+	]
+	gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(textureCoordinates),gl.STATIC_DRAW);
+	floorVertorTextureCoordinateBuffer.itemSize=2;
+	floorVertorTextureCoordinateBuffer.numberOfItems=4;
 
 	floorVertexIndexBuffer=gl.createBuffer();
 	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,floorVertexIndexBuffer);
@@ -164,6 +191,48 @@ function initCubeBuffers(){
 	cubeVertexPositionBuffer.itemSize=3;
 	cubeVertexPositionBuffer.numberOfItems=24;
 
+	cubeVertorTextureCoordinateBuffer=gl.createBuffer();
+	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,cubeVertorTextureCoordinateBuffer);
+	var cubeTextureCoordinates=[
+		//Front face
+	    0.0, 0.0, //v0
+	    1.0, 0.0, //v1
+	    1.0, 1.0, //v2
+	    0.0, 1.0, //v3
+	    
+	    // Back face
+	    0.0, 1.0, //v4
+	    1.0, 1.0, //v5
+	    1.0, 0.0, //v6
+	    0.0, 0.0, //v7
+	    
+	    // Left face
+	    0.0, 1.0, //v8
+	    1.0, 1.0, //v9
+	    1.0, 0.0, //v10
+	    0.0, 0.0, //v11
+	    
+	    // Right face
+	    0.0, 1.0, //v12
+	    1.0, 1.0, //v13
+	    1.0, 0.0, //v14
+	    0.0, 0.0, //v15
+	    
+	    // Top face
+	    0.0, 1.0, //v16
+	    1.0, 1.0, //v17
+	    1.0, 0.0, //v18
+	    0.0, 0.0, //v19
+	    
+	    // Bottom face
+	    0.0, 1.0, //v20
+	    1.0, 1.0, //v21
+	    1.0, 0.0, //v22
+	    0.0, 0.0, //v23
+	]
+	gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,new Float32Array(cubeTextureCoordinates),gl.STATIC_DRAW);
+	cubeVertorTextureCoordinateBuffer.itemSize=2;
+	cubeVertorTextureCoordinateBuffer.numberOfItems=24;
 
 	cubeVertexIndexBuffer=gl.createBuffer();
 	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,cubeVertexIndexBuffer);
@@ -178,6 +247,10 @@ function initCubeBuffers(){
 	gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,new Uint16Array(cubeIndeices),gl.STATIC_DRAW);
 	cubeVertexIndexBuffer.itemSize=1;
 	cubeVertexIndexBuffer.numberOfItems=36;
+}
+
+function initTextureBuffers(){
+	
 }
 
 function getShader(gl,id){
@@ -241,36 +314,51 @@ function uploadMatrixToShader(){
 
 	var mvUniform=gl.getUniformLocation(shaderProgram,'uMVMatrix');
 	gl.uniformMatrix4fv(mvUniform,false,modelViewMatrix);
+
+	uniformSamplerLoc=gl.getUniformLocation(shaderProgram,'uSampler');
+	gl.uniform1i(uniformSamplerLoc, 0);
 }
 
-function drawFloor(r,g,b,a){
-	gl.disableVertexAttribArray(vertexColorAttribute);
-	gl.vertexAttrib4f(vertexColorAttribute,r,g,b,a);
+function drawFloor(){
+	// gl.disableVertexAttribArray(vertexColorAttribute);
+	// gl.vertexAttrib4f(vertexColorAttribute,r,g,b,a);
 
 	gl.bindBuffer(gl.ARRAY_BUFFER,floorVertexPositionBuffer);
 	gl.vertexAttribPointer(vertexPositionAttribute,floorVertexPositionBuffer.itemSize,gl.FLOAT,false,0,0);
+
+	gl.bindBuffer(gl.ARRAY_BUFFER,floorVertorTextureCoordinateBuffer);
+	gl.vertexAttribPointer(vertexTextureAttributeLoc,floorVertorTextureCoordinateBuffer.itemSize,gl.FLOAT,false,0,0);
+	
+	gl.activeTexture(gl.TEXTURE0);
+	gl.bindTexture(gl.TEXTURE_2D,floorTexture);
 
 	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,floorVertexIndexBuffer);
 	gl.drawElements(gl.TRIANGLE_FAN,floorVertexIndexBuffer.numberOfItems,gl.UNSIGNED_SHORT,0);
 }
 
-function drawCube(r,g,b,a){
-	gl.disableVertexAttribArray(vertexColorAttribute);
-	gl.vertexAttrib4f(vertexColorAttribute,r,g,b,a);
+function drawCube(texture){
+	// gl.disableVertexAttribArray(vertexColorAttribute);
+	// gl.vertexAttrib4f(vertexColorAttribute,r,g,b,a);
 
 	gl.bindBuffer(gl.ARRAY_BUFFER,cubeVertexPositionBuffer);
 	gl.vertexAttribPointer(vertexPositionAttribute,cubeVertexPositionBuffer.itemSize,gl.FLOAT,false,0,0);
+
+	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,cubeVertorTextureCoordinateBuffer);
+	gl.vertexAttribPointer(vertexTextureAttributeLoc,cubeVertorTextureCoordinateBuffer.itemSize,gl.FLOAT,false,0,0);
+
+	gl.activeTexture(gl.TEXTURE0);
+	gl.bindTexture(gl.TEXTURE_2D,texture);
 
 	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,cubeVertexIndexBuffer);
 	gl.drawElements(gl.TRIANGLES,cubeVertexIndexBuffer.numberOfItems,gl.UNSIGNED_SHORT,0);
 }
 
-function drawTable(){
+function drawTable(texture){
 	mvPushMatrix();
 	mat4.translate(modelViewMatrix,[0,1,0],modelViewMatrix);
 	mat4.scale(modelViewMatrix,[2,0.1,2],modelViewMatrix);
 	uploadMatrixToShader();
-	drawCube(0.72,0.53,0.04,1);
+	drawCube(texture);
 	mvPopMatrix();
 
 	for(var j=-1;j<2;j+=2){
@@ -279,24 +367,24 @@ function drawTable(){
 			mat4.translate(modelViewMatrix,[1.9*i,-0.1,1.9*j],modelViewMatrix);
 			mat4.scale(modelViewMatrix,[0.1,1,0.1],modelViewMatrix);
 			uploadMatrixToShader();
-			drawCube(0.72,0.53,0.04,1);
+			drawCube(texture);
 			mvPopMatrix();
 		}
 	}
 }
 
-function drawChair(){
+function drawChair(texture){
 	mvPushMatrix();
 	mat4.scale(modelViewMatrix,[1,0.2,1],modelViewMatrix);
 	uploadMatrixToShader();
-	drawCube(1,0,1,1);
+	drawCube(texture);
 	mvPopMatrix();
 
 	mvPushMatrix();
 	mat4.translate(modelViewMatrix,[-0.9,1.2,0],modelViewMatrix);
 	mat4.scale(modelViewMatrix,[0.1,1,1],modelViewMatrix);
 	uploadMatrixToShader();
-	drawCube(1,0,1,1);
+	drawCube(texture);
 	mvPopMatrix();
 
 	
@@ -306,7 +394,7 @@ function drawChair(){
 			mat4.translate(modelViewMatrix,[0.9*i,-1,0.9*j],modelViewMatrix);
 			mat4.scale(modelViewMatrix,[0.1,0.8,0.1],modelViewMatrix);
 			uploadMatrixToShader();
-			drawCube(1,0,1,1);
+			drawCube(texture);
 			mvPopMatrix();
 		}
 	}
@@ -319,28 +407,28 @@ function drawScene(){
 
 	mat4.perspective(60,640/480,0.1,100,projectViewMatrix);
 	mat4.identity(modelViewMatrix);
-	mat4.lookAt([0,5,10],[0,0,0],[0,1,0],modelViewMatrix);
+	mat4.lookAt([8,5,-5],[0,0,0],[0,1,0],modelViewMatrix);
 
 	uploadMatrixToShader();
-	// mvPushMatrix();
-	drawFloor(1.0,0.0,0.0,1.0);
-	
+	drawFloor();
+
 	mvPushMatrix();
 	mat4.translate(modelViewMatrix,[0,1.1,0],modelViewMatrix);
 	uploadMatrixToShader();
-	drawTable();
+	drawTable(woodTexture);
 	mvPopMatrix();
 
 	mvPushMatrix();
 	mat4.translate(modelViewMatrix,[0,2.7,0],modelViewMatrix);
 	mat4.scale(modelViewMatrix, [0.5, 0.5, 0.5], modelViewMatrix);
 	uploadMatrixToShader();
-	drawCube(0,1,0,1);
+	drawCube(cubeTexture);
 	mvPopMatrix();
 
 	mvPushMatrix();
 	mat4.translate(modelViewMatrix,[4,1.8,0],modelViewMatrix);
 	uploadMatrixToShader();
-	drawChair();
+	drawChair(woodTexture);
 	mvPopMatrix();
+	requestAnimationFrame(drawScene);
 }

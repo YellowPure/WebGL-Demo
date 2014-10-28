@@ -7,23 +7,24 @@
 </style>
 <script id='shader-fs' type="x-shader/x-fragment">
 	precision mediump float;
-	varying lowp vec4 vColor;
+	varying vec2 vTextureCoordinates;
+	uniform sampler2D uSampler;
 	void main(void){
-		gl_FragColor=vColor;
+		gl_FragColor=texture2D(uSampler,vTextureCoordinates);
 	}
 </script>
 <script id='shader-vs' type="x-shader/x-vertex">
 	attribute vec3 aVertexPosition;
-	attribute vec4 aVertexColor;
+	attribute vec2 aTextureCoordinates;
 
 	uniform mat4 uMVMatrix;
 	uniform mat4 uPMatrix;
 
-	varying lowp vec4 vColor;
+	varying vec2 vTextureCoordinates;
 
 	void main(void){
 		gl_Position=uPMatrix*uMVMatrix*vec4(aVertexPosition,1.0);
-		vColor=aVertexColor;
+		vTextureCoordinates=aTextureCoordinates;
 	}
 </script>
 <script type="text/javascript" src="../glMatrix-0.9.5.min.js"></script>

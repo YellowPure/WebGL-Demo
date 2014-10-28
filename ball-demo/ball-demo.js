@@ -253,4 +253,6 @@ function drawScene(){
 	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,ballVertexIndexBuffer);
 	gl.drawElements(gl.TRIANGLE,ballVertexIndexBuffer.numberOfItems,gl.UNSIGNED_SHORT,0);
 	mvPopMatrix();
+	requestAnimationFrame(drawScene);
+
 }
