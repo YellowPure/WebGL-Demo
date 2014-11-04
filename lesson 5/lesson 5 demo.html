@@ -4,6 +4,12 @@
 <meta charset="utf-8">
 <title>WebGL case</title>
 <style type="text/css">
+#fps{
+	position: absolute;
+	left:0;
+	top: 0;
+	color: #0000ff;
+}
 </style>
 <script id='shader-fs' type="x-shader/x-fragment">
 	precision mediump float;
@@ -32,6 +38,7 @@
 </head>
 <body onload='init();'>
 <div>
+	<div id='fps'></div>
 	<canvas id='cv' width='640px' height='480px'></canvas>
 </div>
 <video id='video'>Your browser doesn't appear to support the HTML5 element.</video>
