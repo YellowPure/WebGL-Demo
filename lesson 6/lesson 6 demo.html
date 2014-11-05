@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>WebGL case</title>
+<style type="text/css">
+#fps{
+	position: absolute;
+	left:0;
+	top: 0;
+	color: #0000ff;
+}
+</style>
+<script id='shader-fs' type="x-shader/x-fragment">
+	precision mediump float;
+	varying vec2 vTextureCoordinates;
+	uniform sampler2D uSampler;
+	void main(void){
+		gl_FragColor=texture2D(uSampler,vTextureCoordinates);
+	}
+</script>
+<script id='shader-vs' type="x-shader/x-vertex">
+	attribute vec3 aVertexPosition;
+	attribute vec2 aTextureCoordinates;
+
+	uniform mat4 uMVMatrix;
+	uniform mat4 uPMatrix;
+
+	varying vec2 vTextureCoordinates;
+
+	void main(void){
+		gl_Position=uPMatrix*uMVMatrix*vec4(aVertexPosition,1.0);
+		vTextureCoordinates=aTextureCoordinates;
+	}
+</script>
+<script type="text/javascript" src="../glMatrix-0.9.5.min.js"></script>
+<script type="text/javascript" src="lesson6Demo.js"></script>
+</head>
+<body onload='init();'>
+<div>
+	<div id='fps'></div>
+	<canvas id='cv' width='640px' height='480px'></canvas>
+</div>
+<video id='video'>Your browser doesn't appear to support the HTML5 element.</video>
+</body>
+</html>
