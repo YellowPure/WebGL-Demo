@@ -69,7 +69,10 @@ function init(){
 		camera.previousFrameTimeStamp=Date.now();
 		scene.x=8;
 		scene.y=5;
-		scene.z=-10;
+		scene.z=10;
+		scene.circleRadius=10;
+		scene.deltaAngle=0;
+		scene.deltaY=0;
 		scene.angle=0;
 		mouseObj.x=0;
 		mouseObj.y=0;
@@ -79,20 +82,29 @@ function init(){
 }
 
 function onMouseDown(e){
-	console.log('mousedown - e.clientX=%d,e.clientY=%d',e.clientX,e.clientY);
+	
 	cv.addEventListener('mousemove',onMouseMove);
-	mouseObj.x=e.clientX-cv.width/2;
-	mouseObj.y=e.clientY-cv.height/2;
+	mouseObj.prevX=e.clientX;
+	mouseObj.prevY=e.clientY;
+	console.log('mousedown - emouseObj.x=%d,mouseObj.y=%d',mouseObj.x,mouseObj.y);
 }
 
 function onMouseMove(e){
-	console.log('mousemove - e.clientX=%d,e.clientY=%d',e.clientX,e.clientY);
-	mouseObj.moveX=e.clientX-cv.width/2;
-	mouseObj.moveY=e.clientY-cv.height/2;
+	
+	mouseObj.deltaX=e.clientX - mouseObj.prevX;
+	mouseObj.deltaY=e.clientY - mouseObj.prevY;
+	
+	console.log('mousemove - mouseObj.deltaX=%d,mouseObj.deltaY=%d',mouseObj.deltaX,mouseObj.deltaY);
+	scene.deltaAngle=mouseObj.deltaX/2000*2*Math.PI%(2*Math.PI);
+	scene.deltaY=mouseObj.deltaY/20;
+	mouseObj.prevX=e.clientX;
+	mouseObj.prevY=e.clientY;
 }
 
 function onMouseUp(e){
 	console.log('mouseup - e.clientX=%d',e.clientX);
+	scene.deltaAngle=0;
+	scene.deltaY=0;
 	cv.removeEventListener('mousemove',onMouseMove);
 }
 
@@ -558,20 +570,16 @@ function drawScene(currentTime){
 		第二个参数定义视图方向指向原点
 		第三个参数定义照相机向上方向为y轴正方向
 	*/
-	// scene
-	if(mouseObj.moveX!=undefined&&mouseObj.x!=undefined){
-		scene.angle=(mouseObj.moveX - mouseObj.x)/2000*2*Math.PI%(2*Math.PI);
+	/*
+		视角移动
 
-		// console.log(scene.angle);
-		// var offsetX=scene.x;
-		scene.x=(mouseObj.moveX - mouseObj.x)/2000+8;
-		// console.log('scene.x=%d',scene.x);
-		scene.z=1/Math.tan(scene.angle)*scene.x;
-	}
-	
-	// console.log('scene.x',scene.x);
+	*/
+	scene.angle+=scene.deltaAngle;//1/2000*2*Math.PI%(2*Math.PI);
+	scene.x=Math.cos(scene.angle)*scene.circleRadius;
+	scene.z=Math.sin(scene.angle)*scene.circleRadius;
+	scene.y+=scene.deltaY;
+	// console.log(scene.angle,scene.x);
 	mat4.lookAt([scene.x,scene.y,scene.z],[0,0,0],[0,1,0],modelViewMatrix);
-
 	uploadMatrixToShader();
 	drawFloor();
 

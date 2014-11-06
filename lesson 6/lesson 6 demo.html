@@ -6,9 +6,10 @@
 <style type="text/css">
 #fps{
 	position: absolute;
-	left:0;
+	right:500px;
 	top: 0;
 	color: #0000ff;
+	display: none;
 }
 </style>
 <script id='shader-fs' type="x-shader/x-fragment">
@@ -38,9 +39,10 @@
 </head>
 <body onload='init();'>
 <div>
-	<div id='fps'></div>
+	
 	<canvas id='cv' width='640px' height='480px'></canvas>
 </div>
+<div id='fps'></div>
 <video id='video'>Your browser doesn't appear to support the HTML5 element.</video>
 </body>
 </html>
