@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>WebGL case</title>
+<style type="text/css">
+</style>
+<script id='shader-fs' type="x-shader/x-fragment">
+	void main(void){
+		gl_FragColor=vec4(0,1.0,1.0,1.0);
+		
+	}
+</script>
+<script id='shader-vs' type="x-shader/x-vertex">
+	attribute vec3 aVertexPosition;
+
+	void main(void){
+		gl_Position=vec4(aVertexPosition,1.0);
+		gl_PointSize=5.0;
+	}
+</script>
+<script type="text/javascript">
+
+var shaderProgram;
+var vertexPositionAttribute;
+
+var pointerVertexPositionBuffer;
+var lineVertextPositionBuffer;
+var lineLoopVertexPositionBuffer;
+var lineStripVertexPositionBuffer;
+
+
+var triangleVertexPositionBuffer;
+var triangleStripPositionBuffer;
+var triangleFanPositionBuffer;
+var triangleElementsPositionBuffer;
+var triangleElementsIndexBuffer;
+
+
+window.onload=function(){
+	var cv=document.getElementById('cv');
+	gl = initWebGL();
+
+	if(gl){
+		gl.clearColor(0,0,0,1);
+		gl.enable(gl.DEPTH_TEST);
+		gl.depthFunc(gl.LEQUAL);
+		gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
+
+		initShaders();
+
+		initBuffers();
+		drawScene();
+	}
+}
+
+function initWebGL(){
+	var _gl=null;
+	try{
+		_gl=cv.getContext('webgl')|| cv.getContext("experimental-webgl");
+	}catch(e){
+		
+	}
+	if(!_gl){alert('web browser is not support WebGL.')}else{
+		return _gl;
+	}
+}
+
+function initShaders(){
+	var fragmentShader=getShader(gl,'shader-fs');
+	var vertexShader=getShader(gl,'shader-vs');
+
+	shaderProgram=gl.createProgram();
+	gl.attachShader(shaderProgram,vertexShader);
+	gl.attachShader(shaderProgram,fragmentShader);
+	gl.linkProgram(shaderProgram);
+
+	if(!gl.getProgramParameter(shaderProgram,gl.LINK_STATUS)&&!gl.isContextLost()){
+		console.log('unable to initialize the shader program');
+	}
+
+	gl.useProgram(shaderProgram);
+
+	vertexPositionAttribute=gl.getAttribLocation(shaderProgram,'aVertexPosition');
+	gl.enableVertexAttribArray(vertexPositionAttribute);
+}
+function initBuffers(){
+	pointerVertexPositionBuffer=gl.createBuffer();
+	gl.bindBuffer(gl.ARRAY_BUFFER,pointerVertexPositionBuffer);
+	var pointerPosition=[
+		0.0,0,0,
+		0.2,0,0
+	];
+	gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(pointerPosition),gl.STATIC_DRAW);
+	pointerVertexPositionBuffer.itemSize=3;
+	pointerVertexPositionBuffer.numberOfItems=2;
+
+	lineVertextPositionBuffer=gl.createBuffer();
+	gl.bindBuffer(gl.ARRAY_BUFFER,lineVertextPositionBuffer);
+	var linePosition=[
+		0.3,0.5,
+		0.5,0.5,
+		0.5,0.3,
+		0,0
+	]
+	gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(linePosition),gl.STATIC_DRAW);
+	lineVertextPositionBuffer.itemSize=2;
+	lineVertextPositionBuffer.numberOfItems=4;
+
+	lineLoopVertexPositionBuffer=gl.createBuffer();
+	gl.bindBuffer(gl.ARRAY_BUFFER,lineLoopVertexPositionBuffer);
+	var lineLoopPosition=[
+		0,0,
+		-0.1,-0.2,
+		-0.5,-0.4,
+		-0.5,-0.3
+	]
+	gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(lineLoopPosition),gl.STATIC_DRAW);
+	lineLoopVertexPositionBuffer.itemSize=2;
+	lineLoopVertexPositionBuffer.numberOfItems=4;
+
+	lineStripVertexPositionBuffer=gl.createBuffer();
+	gl.bindBuffer(gl.ARRAY_BUFFER,lineStripVertexPositionBuffer);
+	var lineStripPosition=[
+		0,0,
+		0.1,-0.2,
+		0.5,-0.4,
+		0.5,-0.3
+	];
+	gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(lineStripPosition),gl.STATIC_DRAW);
+	lineStripVertexPositionBuffer.itemSize=2;
+	lineStripVertexPositionBuffer.numberOfItems=4;
+
+	triangleVertexPositionBuffer=gl.createBuffer();
+	gl.bindBuffer(gl.ARRAY_BUFFER,triangleVertexPositionBuffer);
+	var trianglePosition=[
+		0.1,0.0,0.0,
+		0.1,0.1,0.0,
+		0.0,0.1,0.0
+	]
+	gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(trianglePosition),gl.STATIC_DRAW);
+	triangleVertexPositionBuffer.itemSize=3;
+	triangleVertexPositionBuffer.numberOfItems=3;
+
+	triangleStripPositionBuffer=gl.createBuffer();
+	gl.bindBuffer(gl.ARRAY_BUFFER,triangleStripPositionBuffer);
+	var triangleStripPosition=[
+		0,0.0,0.0,
+		-0.2,0,0.0,
+		-0.2,0.2,0.0,
+		-0.5,0.3,0,
+	]
+	gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(triangleStripPosition),gl.STATIC_DRAW);
+	triangleStripPositionBuffer.itemSize=3;
+	triangleStripPositionBuffer.numberOfItems=4;
+
+	triangleFanPositionBuffer=gl.createBuffer();
+	gl.bindBuffer(gl.ARRAY_BUFFER,triangleFanPositionBuffer);
+
+	var triangleFanPosition=[
+		0.6+0,0,
+		0.6+0.1,0.9,
+		0.6+0.25,0.8,
+		0.6+0.25,0.7
+	]
+	gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(triangleFanPosition),gl.STATIC_DRAW);
+	triangleFanPositionBuffer.itemSize=2;
+	triangleFanPositionBuffer.numberOfItems=4;
+
+	triangleElementsPositionBuffer=gl.createBuffer();
+	gl.bindBuffer(gl.ARRAY_BUFFER,triangleElementsPositionBuffer);
+	var triangleElementsPosition=[
+		0.25,0.2,0.0,
+		0.3,0.3,0.0,
+		0.2,0.3,0.0
+	]
+	gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(triangleElementsPosition),gl.STATIC_DRAW);
+	triangleElementsPositionBuffer.itemSize=3;
+	triangleElementsPositionBuffer.numberOfItems=3;
+
+	triangleElementsIndexBuffer=gl.createBuffer();
+	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,triangleElementsIndexBuffer);
+	var triangleElementsIndex=[0,1,2];
+	gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,new Uint16Array(triangleElementsIndex),gl.STATIC_DRAW);
+	triangleElementsIndexBuffer.itemSize=1;
+	triangleElementsIndexBuffer.numberOfItems=3;
+}
+
+function drawScene(){
+	gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
+	gl.viewport(0,0,640,480);
+	
+	//pointer
+	gl.bindBuffer(gl.ARRAY_BUFFER,pointerVertexPositionBuffer);	
+	gl.vertexAttribPointer(vertexPositionAttribute,pointerVertexPositionBuffer.itemSize,gl.FLOAT,false,0,0);
+	gl.enableVertexAttribArray(shaderProgram,vertexPositionAttribute);
+	gl.drawArrays(gl.POINTS,0,pointerVertexPositionBuffer.numberOfItems);
+	//line
+	gl.bindBuffer(gl.ARRAY_BUFFER,lineVertextPositionBuffer);	
+	gl.vertexAttribPointer(vertexPositionAttribute,lineVertextPositionBuffer.itemSize,gl.FLOAT,false,0,0);
+	gl.enableVertexAttribArray(shaderProgram,vertexPositionAttribute);
+	gl.drawArrays(gl.LINES,0,lineVertextPositionBuffer.numberOfItems);
+	//line loop
+	gl.bindBuffer(gl.ARRAY_BUFFER,lineLoopVertexPositionBuffer);	
+	gl.vertexAttribPointer(vertexPositionAttribute,lineLoopVertexPositionBuffer.itemSize,gl.FLOAT,false,0,0);
+	gl.enableVertexAttribArray(shaderProgram,vertexPositionAttribute);
+	gl.drawArrays(gl.LINE_LOOP,0,lineLoopVertexPositionBuffer.numberOfItems);
+	//line strip
+	gl.bindBuffer(gl.ARRAY_BUFFER,lineStripVertexPositionBuffer);	
+	gl.vertexAttribPointer(vertexPositionAttribute,lineStripVertexPositionBuffer.itemSize,gl.FLOAT,false,0,0);
+	gl.enableVertexAttribArray(shaderProgram,vertexPositionAttribute);
+	gl.drawArrays(gl.LINE_STRIP,0,lineStripVertexPositionBuffer.numberOfItems);
+	//triangle
+	gl.bindBuffer(gl.ARRAY_BUFFER,triangleVertexPositionBuffer);	
+	gl.vertexAttribPointer(vertexPositionAttribute,triangleVertexPositionBuffer.itemSize,gl.FLOAT,false,0,0);
+	gl.enableVertexAttribArray(shaderProgram,vertexPositionAttribute);
+	gl.drawArrays(gl.TRIANGLES,0,triangleVertexPositionBuffer.numberOfItems);
+	//triangle strip
+	gl.bindBuffer(gl.ARRAY_BUFFER,triangleStripPositionBuffer);	
+	gl.vertexAttribPointer(vertexPositionAttribute,triangleStripPositionBuffer.itemSize,gl.FLOAT,false,0,0);
+	gl.enableVertexAttribArray(shaderProgram,vertexPositionAttribute);
+	gl.drawArrays(gl.TRIANGLE_STRIP,0,triangleStripPositionBuffer.numberOfItems);
+	//triangle fan
+	gl.bindBuffer(gl.ARRAY_BUFFER,triangleFanPositionBuffer);	
+	gl.vertexAttribPointer(vertexPositionAttribute,triangleFanPositionBuffer.itemSize,gl.FLOAT,false,0,0);
+	gl.enableVertexAttribArray(shaderProgram,vertexPositionAttribute);
+	gl.drawArrays(gl.TRIANGLE_FAN,0,triangleFanPositionBuffer.numberOfItems);
+
+	//triangle drawElements
+	gl.bindBuffer(gl.ARRAY_BUFFER,triangleElementsPositionBuffer);	
+	gl.vertexAttribPointer(vertexPositionAttribute,triangleElementsPositionBuffer.itemSize,gl.FLOAT,false,0,0);
+	gl.enableVertexAttribArray(shaderProgram,vertexPositionAttribute);
+	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,triangleElementsIndexBuffer);
+	gl.drawElements(gl.TRIANGLES,triangleElementsIndexBuffer.numberOfItems,gl.UNSIGNED_SHORT,0);
+}
+
+function getShader(gl,id){
+	var shaderScript,theSource,currentChild,shader;
+
+	shaderScript=document.getElementById(id);
+	if(!shaderScript){
+		return null;
+	}
+
+	theSource='';
+	currentChild=shaderScript.firstChild;
+
+	while(currentChild){
+		if(currentChild.nodeType==currentChild.TEXT_NODE){
+			theSource+=currentChild.textContent;
+		}
+		currentChild=currentChild.nextSibling;
+	}
+
+	if(shaderScript.type=='x-shader/x-vertex'){
+		shader=gl.createShader(gl.VERTEX_SHADER);
+	}else if(shaderScript.type=='x-shader/x-fragment'){
+		shader=gl.createShader(gl.FRAGMENT_SHADER);
+	}else{
+		return null;
+	}
+
+	gl.shaderSource(shader,theSource);
+
+	gl.compileShader(shader);
+
+	if(!gl.getShaderParameter(shader,gl.COMPILE_STATUS)&&!gl.isContextLost()){
+		console.log('an error occurred compiling the shaders:'+gl.getShaderInfoLog(shader));
+		return null;
+	}
+	return shader;
+}
+
+
+
+
+
+</script>
+</head>
+<body>
+<div>
+	<canvas id='cv' width='640px' height='480px'></canvas>
+</div>
+<video id='video'>Your browser doesn't appear to support the HTML5 element.</video>
+</body>
+</html>

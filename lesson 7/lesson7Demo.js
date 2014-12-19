@@ -13,12 +13,23 @@ var floorVertexIndexBuffer;
 var cubeVertexPositionBuffer;
 var cubeVertexIndexBuffer;
 var cubeVertexColorBuffer;
+var cubeVertexNormalBuffer;
+var cubeVertorTextureCoordinateBuffer;
+var floorVertorTextureCoordinateBuffer;
+
 var vertexColorAttribute;
 var vertexPositionAttribute;
-var floorVertorTextureCoordinateBuffer;
+
 var uniformSamplerLoc;
+var uniformNormalMatrixLoc;
 var vertexTextureAttributeLoc;
-var cubeVertorTextureCoordinateBuffer
+var vertexNormalAttributeLoc;
+var uniformLightPositionLoc;
+var uniformAmbientLightColoLoc;
+var uniformDiffuseLightColorLoc;
+var uniformSpecularLightColorLoc;
+
+
 var floorTexture;
 var woodTexture;
 var cubeTexture;
@@ -58,6 +69,7 @@ function init(){
 		initShaders();
 
 		initBuffers();
+		initLights();
 		initTexture();	
 
 		camera.x=0;
@@ -159,9 +171,9 @@ function initWebGL(){
 
 function initShaders(){
 	//生成顶点着色器和片段着色器
-	var fragmentShader=getShader(gl,'shader-fs');
 	var vertexShader=getShader(gl,'shader-vs');
-
+	var fragmentShader=getShader(gl,'shader-fs');
+	
 	//生成程序对象
 	shaderProgram=gl.createProgram();
 	//将顶点和片段着色器附加到WebGLProgram中
@@ -182,12 +194,27 @@ function initShaders(){
 
 	// vertexColorAttribute=gl.getAttribLocation(shaderProgram,'aVertexColor');
 	// gl.enableVertexAttribArray(vertexColorAttribute);
-
 	
 	// gl.activeTexture(gl.TEXTURE0);
 
 	vertexTextureAttributeLoc=gl.getAttribLocation(shaderProgram,'aTextureCoordinates');
 	gl.enableVertexAttribArray(vertexTextureAttributeLoc);
+	vertexNormalAttributeLoc=gl.getAttribLocation(shaderProgram,'aVertexNormal');
+	gl.enableVertexAttribArray(vertexNormalAttributeLoc);
+
+	uniformNormalMatrixLoc=gl.getUniformLocation(shaderProgram,'uNMatrix');
+	uniformLightPositionLoc=gl.getUniformLocation(shaderProgram,'uLightPosition');
+	uniformAmbientLightColoLoc=gl.getUniformLocation(shaderProgram,'uAmbientLightColor');
+	uniformDiffuseLightColorLoc=gl.getUniformLocation(shaderProgram,'uDiffuseLightColor');
+	uniformSpecularLightColorLoc=gl.getUniformLocation(shaderProgram,'uSpecularLightColor');
+}
+
+function initLights(){
+	//给光源 以及环境光、漫反射和镜面反射光赋值
+	gl.uniform3fv(uniformLightPositionLoc,[8,15,5]);
+	gl.uniform3fv(uniformAmbientLightColoLoc,[0.2,0.2,0.2]);
+	gl.uniform3fv(uniformDiffuseLightColorLoc,[0.7,0.7,0.7]);
+	gl.uniform3fv(uniformSpecularLightColorLoc,[1,1,1]);
 }
 
 function initTexture(){
@@ -198,7 +225,7 @@ function initTexture(){
 	setTexture('wood_128x128.jpg',woodTexture);
 
 	cubeTexture=gl.createTexture();
-	setTexture('../lesson 5/item.gif',cubeTexture);
+	setTexture('wicker_256.jpg',cubeTexture);
 }
 
 /*
@@ -382,6 +409,44 @@ function initCubeBuffers(){
 	gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,new Uint16Array(cubeIndeices),gl.STATIC_DRAW);
 	cubeVertexIndexBuffer.itemSize=1;
 	cubeVertexIndexBuffer.numberOfItems=36;
+
+	//法线数组。
+	cubeVertexNormalBuffer=gl.createBuffer();
+	gl.bindBuffer(gl.ARRAY_BUFFER,cubeVertexNormalBuffer);
+	var normal=[
+		0,0,1,
+		0,0,1,
+		0,0,1,
+		0,0,1,
+
+		0,0,-1,
+		0,0,-1,
+		0,0,-1,
+		0,0,-1,
+
+		1,0,0,
+		1,0,0,
+		1,0,0,
+		1,0,0,
+
+		-1,0,0,
+		-1,0,0,
+		-1,0,0,
+		-1,0,0,
+
+		0,1,0,
+		0,1,0,
+		0,1,0,
+		0,1,0,
+
+		0,-1,0,
+		0,-1,0,
+		0,-1,0,
+		0,-1,0
+	]
+	gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(normal),gl.STATIC_DRAW);
+	cubeVertexNormalBuffer.itemSize=3;
+	cubeVertexNormalBuffer.numberOfItems=24;	
 }
 
 
@@ -455,6 +520,13 @@ function uploadMatrixToShader(){
 	gl.uniform1i(uniformSamplerLoc, 0);
 }
 
+function uploadNormalMatrixToShader() {
+  var normalMatrix = mat3.create();
+  mat4.toInverseMat3(modelViewMatrix, normalMatrix);
+  mat3.transpose(normalMatrix);
+  gl.uniformMatrix3fv(uniformNormalMatrixLoc, false, normalMatrix);
+}
+
 function drawFloor(){
 	// gl.disableVertexAttribArray(vertexColorAttribute);
 	// gl.vertexAttrib4f(vertexColorAttribute,r,g,b,a);
@@ -475,6 +547,8 @@ function drawFloor(){
 function drawCube(texture){
 	// gl.disableVertexAttribArray(vertexColorAttribute);
 	// gl.vertexAttrib4f(vertexColorAttribute,r,g,b,a);
+	gl.bindBuffer(gl.ARRAY_BUFFER,cubeVertexNormalBuffer);
+	gl.vertexAttribPointer(vertexNormalAttributeLoc,cubeVertexNormalBuffer.itemSize,gl.FLOAT,false,0,0);
 
 	gl.bindBuffer(gl.ARRAY_BUFFER,cubeVertexPositionBuffer);
 	gl.vertexAttribPointer(vertexPositionAttribute,cubeVertexPositionBuffer.itemSize,gl.FLOAT,false,0,0);
@@ -579,15 +653,17 @@ function drawScene(currentTime){
 	scene.x=Math.cos(scene.angle)*scene.circleRadius;
 	scene.z=Math.sin(scene.angle)*scene.circleRadius;
 	scene.y+=scene.deltaY;
-	// console.log(scene.angle,scene.x);
+	// console.log(scene.x,scene.y,scene.z);
 	mat4.lookAt([scene.x,scene.y,scene.z],[0,0,0],[0,1,0],modelViewMatrix);
 	uploadMatrixToShader();
+	uploadNormalMatrixToShader();
 	drawFloor();
 
 	mvPushMatrix();
 	//模型视图变换 z轴平移-10
 	mat4.translate(modelViewMatrix,[0,1.1,0],modelViewMatrix);
 	uploadMatrixToShader();
+	uploadNormalMatrixToShader();
 	drawTable(woodTexture);
 	mvPopMatrix();
 
@@ -596,6 +672,7 @@ function drawScene(currentTime){
 	mvPushMatrix();
 	mat4.translate(modelViewMatrix,[4,1.8,0],modelViewMatrix);
 	uploadMatrixToShader();
+	uploadNormalMatrixToShader();
 	drawChair(woodTexture);
 	mvPopMatrix();
 	
@@ -614,10 +691,10 @@ function drawScene(currentTime){
 		camera.x=Math.cos(camera.angle)*camera.circleRadius;
 		camera.z=Math.sin(camera.angle)*camera.circleRadius;
 	}
-	// mat4.translate(modelViewMatrix,[camera.x,camera.y,camera.z],modelViewMatrix);
-	mat4.translate(modelViewMatrix,[0,3.2,0],modelViewMatrix);
+	mat4.translate(modelViewMatrix,[camera.x,camera.y,camera.z],modelViewMatrix);
 	mat4.scale(modelViewMatrix, [0.5, 0.5, 0.5], modelViewMatrix);
 	uploadMatrixToShader();
+	uploadNormalMatrixToShader();
 	drawCube(cubeTexture);
 	mvPopMatrix();
 

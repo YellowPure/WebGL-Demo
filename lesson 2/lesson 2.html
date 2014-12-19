@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>WebGL case</title>
+<style type="text/css">
+</style>
+<script id='shader-fs' type="x-shader/x-fragment">
+	void main(void){
+		gl_FragColor=vec4(0,1.0,1.0,1.0);
+	}
+</script>
+<script id='shader-vs' type="x-shader/x-vertex">
+	attribute vec3 aVertexPosition;
+
+	void main(void){
+		gl_Position=vec4(aVertexPosition,1.0);
+	}
+</script>
+<script type="text/javascript">
+
+var shaderProgram;
+var triangleVertexPositionAttribute;
+var triangleVertexPositionBuffer;
+
+window.onload=function(){
+	var cv=document.getElementById('cv');
+	gl = initWebGL();
+
+	if(gl){
+		gl.clearColor(0,0,0,1);
+		gl.enable(gl.DEPTH_TEST);
+		gl.depthFunc(gl.LEQUAL);
+		gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
+
+		initShaders();
+
+		initBuffers();
+		drawScene();
+	}
+}
+
+function initWebGL(){
+	var _gl=null;
+	try{
+		_gl=cv.getContext('webgl')|| cv.getContext("experimental-webgl");
+	}catch(e){
+		
+	}8
+	if(!_gl){alert('web browser is not support WebGL.')}else{
+		return _gl;
+	}
+}
+
+function initShaders(){
+	var fragmentShader=getShader(gl,'shader-fs');
+	var vertexShader=getShader(gl,'shader-vs');
+
+	shaderProgram=gl.createProgram();
+	gl.attachShader(shaderProgram,vertexShader);
+	gl.attachShader(shaderProgram,fragmentShader);
+	gl.linkProgram(shaderProgram);
+
+	if(!gl.getProgramParameter(shaderProgram,gl.LINK_STATUS)&&!gl.isContextLost()){
+		console.log('unable to initialize the shader program');
+	}
+
+	gl.useProgram(shaderProgram);
+
+	triangleVertexPositionAttribute=gl.getAttribLocation(shaderProgram,'aVertexPosition');
+	gl.enableVertexAttribArray(triangleVertexPositionAttribute);
+
+}
+function initBuffers(){
+	triangleVertexPositionBuffer=gl.createBuffer();
+	gl.bindBuffer(gl.ARRAY_BUFFER,triangleVertexPositionBuffer);
+	var trianglePosition=[
+		0.1,0,0,
+		0.1,0.1,0,
+		0,0.1,0,
+
+		0.1,0.2,0,
+		1,0.5,0,
+		0,0.5,0
+	]
+	gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(trianglePosition),gl.STATIC_DRAW);
+	triangleVertexPositionBuffer.itemSize=3;
+	triangleVertexPositionBuffer.numberOfItems=6;
+}
+
+function drawScene(){
+	gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
+	gl.viewport(0,0,640,480);
+
+	gl.vertexAttribPointer(triangleVertexPositionAttribute,triangleVertexPositionBuffer.itemSize,gl.FLOAT,false,0,0);
+	gl.enableVertexAttribArray(shaderProgram,triangleVertexPositionAttribute);
+	gl.drawArrays(gl.TRIANGLES,0,triangleVertexPositionBuffer.numberOfItems);
+}
+
+function getShader(gl,id){
+	var shaderScript,theSource,currentChild,shader;
+
+	shaderScript=document.getElementById(id);
+	if(!shaderScript){
+		return null;
+	}
+
+	theSource='';
+	currentChild=shaderScript.firstChild;
+
+	while(currentChild){
+		if(currentChild.nodeType==currentChild.TEXT_NODE){
+			theSource+=currentChild.textContent;
+		}
+		currentChild=currentChild.nextSibling;
+	}
+
+	if(shaderScript.type=='x-shader/x-vertex'){
+		shader=gl.createShader(gl.VERTEX_SHADER);
+	}else if(shaderScript.type=='x-shader/x-fragment'){
+		shader=gl.createShader(gl.FRAGMENT_SHADER);
+	}else{
+		return null;
+	}
+
+	gl.shaderSource(shader,theSource);
+
+	gl.compileShader(shader);
+
+	if(!gl.getShaderParameter(shader,gl.COMPILE_STATUS)&&!gl.isContextLost()){
+		console.log('an error occurred compiling the shaders:'+gl.getShaderInfoLog(shader));
+		return null;
+	}
+	return shader;
+}
+
+
+
+
+
+</script>
+</head>
+<body>
+<div>
+	<canvas id='cv' width='640px' height='480px'></canvas>
+</div>
+<video id='video'>Your browser doesn't appear to support the HTML5 element.</video>
+</body>
+</html>

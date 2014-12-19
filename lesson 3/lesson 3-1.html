@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>WebGL case</title>
+<style type="text/css">
+</style>
+<script type="text/javascript" src="../glMatrix-0.9.5.min.js"></script>
+<script id='shader-fs' type="x-shader/x-fragment">
+	precision mediump float;
+	varying lowp vec4 vColor;
+	void main(void){
+		gl_FragColor=vColor;
+	}
+</script>
+<script id='shader-vs' type="x-shader/x-vertex">
+	attribute vec3 aVertexPosition;
+	attribute vec4 aVertexColor;
+
+	uniform mat4 uMVMatrix;
+	uniform mat4 uPMatrix;
+
+	varying lowp vec4 vColor;
+	void main(void){
+		vColor=aVertexColor;
+		gl_Position=uPMatrix*uMVMatrix*vec4(aVertexPosition,1.0);
+	}
+</script>
+<script type="text/javascript">
+
+var shaderProgram;
+var vertexPositionAttribute;
+var vertexColorAttribute;
+var cubeVertexPositionBuffer;
+var cubeVertexIndexBuffer;
+var cubeVertexColorBuffer;
+
+var mvMatrixStack=[];
+var modelViewMatrix=mat4.create();
+var projectViewMatrix=mat4.create();
+
+window.onload=function(){
+	var cv=document.getElementById('cv');
+	gl = initWebGL();
+
+	if(gl){
+		gl.clearColor(0,0,0,1);
+		gl.enable(gl.DEPTH_TEST);
+		gl.depthFunc(gl.LEQUAL);
+		gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
+
+		initShaders();
+
+		initBuffers();
+		drawScene();
+	}
+}
+
+function initWebGL(){
+	var _gl=null;
+	try{
+		_gl=cv.getContext('webgl')|| cv.getContext("experimental-webgl");
+	}catch(e){
+		
+	}
+	if(!_gl){alert('web browser is not support WebGL.')}else{
+		return _gl;
+	}
+}
+
+function initShaders(){
+	var fragmentShader=getShader(gl,'shader-fs');
+	var vertexShader=getShader(gl,'shader-vs');
+
+	shaderProgram=gl.createProgram();
+	gl.attachShader(shaderProgram,vertexShader);
+	gl.attachShader(shaderProgram,fragmentShader);
+	gl.linkProgram(shaderProgram);
+
+	if(!gl.getProgramParameter(shaderProgram,gl.LINK_STATUS)&&!gl.isContextLost()){
+		console.log('unable to initialize the shader program');
+	}
+
+	gl.useProgram(shaderProgram);
+
+	vertexPositionAttribute=gl.getAttribLocation(shaderProgram,'aVertexPosition');
+	gl.enableVertexAttribArray(vertexPositionAttribute);
+	vertexColorAttribute=gl.getAttribLocation(shaderProgram,'aVertexColor');
+	gl.enableVertexAttribArray(vertexColorAttribute);
+}
+function initBuffers(){
+	cubeVertexPositionBuffer=gl.createBuffer();
+	gl.bindBuffer(gl.ARRAY_BUFFER,cubeVertexPositionBuffer);
+	var cubePosition=[
+		//front face
+		1,1,1,
+		1,-1,1,
+		-1,-1,1,
+		-1,1,.1,
+		//back face
+		1,1,-1,
+		1,-1,-1,
+		-1,-1,-1,
+		-1,1,-1,
+		//left face
+		-1,1,1,
+		-1,-1,1,
+		-1,-1,-1,
+		-1,1,-1,
+		//right face
+		1,1,1,
+		1,-1,1,
+		1,-1,-1,
+		1,1,-1,
+		//top face
+		-1,1,1,
+		1,1,1,
+		1,1,-1,
+		-1,1,-1,
+		//bottom face
+		-1,-1,1,
+		1,-1,1,
+		1,-1,-1,
+		-1,-1,-1
+	]
+	gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(cubePosition),gl.STATIC_DRAW);
+	cubeVertexPositionBuffer.itemSize=3;
+	cubeVertexPositionBuffer.numOfItems=24;
+
+	cubeVertexIndexBuffer=gl.createBuffer();
+	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,cubeVertexIndexBuffer);
+	var cubeIndex = [
+    0,  1,  2,      0,  2,  3,    // front
+    4,  5,  6,      4,  6,  7,    // back
+    8,  9,  10,     8,  10, 11,   // top
+    12, 13, 14,     12, 14, 15,   // bottom
+    16, 17, 18,     16, 18, 19,   // right
+    20, 21, 22,     20, 22, 23    // left
+  ]
+	gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,new Uint16Array(cubeIndex),gl.STATIC_DRAW);
+	cubeVertexIndexBuffer.itemSize=1;
+	cubeVertexIndexBuffer.numOfItems=36;
+
+	cubeVertexColorBuffer=gl.createBuffer();
+	gl.bindBuffer(gl.ARRAY_BUFFER,cubeVertexColorBuffer);
+	var colors = [
+      [1.0,  1.0,  1.0,  1.0],    // Front face: white
+      [1.0,  0.0,  0.0,  1.0],    // Back face: red
+      [0.0,  1.0,  0.0,  1.0],    // Top face: green
+      [0.0,  0.0,  1.0,  1.0],    // Bottom face: blue
+      [1.0,  1.0,  0.0,  1.0],    // Right face: yellow
+      [1.0,  0.0,  1.0,  1.0]     // Left face: purple
+    ];
+  
+  
+  	var generatedColors = [];
+  
+	for (j=0; j<6; j++) {
+	   var c = colors[j];
+	   
+	   for (var i=0; i<4; i++) {
+	     generatedColors = generatedColors.concat(c);
+	   }
+	}
+	gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(generatedColors),gl.STATIC_DRAW);
+	cubeVertexColorBuffer.itemSize=4;
+	cubeVertexColorBuffer.numOfItems=6;
+}
+
+function mvPushMatrix(m){
+	if(m){
+		var _m=mat4.create(m);
+		mvMatrixStack.push(_m);
+		modelViewMatrix=_m;
+	}else{
+		mvMatrixStack.push(mat4.create(modelViewMatrix));
+	}
+}
+
+function mvPopMatrix(){
+	if(!mvMatrixStack.length){
+		throw("can't pop form an empty matrix stack");
+	}
+	modelViewMatrix=mvMatrixStack.pop();
+	return modelViewMatrix;
+}
+
+function uploadMatrixToShader(){
+	var pUniform=gl.getUniformLocation(shaderProgram,'uPMatrix');
+	gl.uniformMatrix4fv(pUniform,false,projectViewMatrix);
+
+	var mvUniform=gl.getUniformLocation(shaderProgram,'uMVMatrix');
+	gl.uniformMatrix4fv(mvUniform,false,modelViewMatrix);
+}
+
+function drawScene(){
+	gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
+	gl.viewport(0,0,640,480);
+
+	mat4.perspective(60,640/480,0.1,100,projectViewMatrix);
+	mat4.identity(modelViewMatrix);
+	/*
+		第一个参数 定义相机位置
+		第二个参数 定义视图方向
+		第三个参数 定义向上方向为y轴正方向
+	*/
+	mat4.lookAt([-9,5,10],[0,0,0],[0,1,0],modelViewMatrix);
+	//把模型坐标向y轴正方向移动3个单位
+	mat4.translate(modelViewMatrix,[0,3,0],modelViewMatrix);
+	//旋转
+	mat4.rotateX(modelViewMatrix,0.5,modelViewMatrix);
+	//缩放
+	mat4.scale(modelViewMatrix,[0.5,0.5,0.5],modelViewMatrix);
+
+	uploadMatrixToShader();
+	mvPushMatrix();
+
+	gl.bindBuffer(gl.ARRAY_BUFFER,cubeVertexPositionBuffer);	
+	gl.vertexAttribPointer(vertexPositionAttribute,cubeVertexPositionBuffer.itemSize,gl.FLOAT,false,0,0);
+
+	gl.bindBuffer(gl.ARRAY_BUFFER,cubeVertexColorBuffer);
+	gl.vertexAttribPointer(vertexColorAttribute,cubeVertexColorBuffer.itemSize,gl.FLOAT,false,0,0);
+
+	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,cubeVertexIndexBuffer);
+	gl.drawElements(gl.TRIANGLES,cubeVertexIndexBuffer.numOfItems,gl.UNSIGNED_SHORT,0);
+	mvPopMatrix();
+}
+
+function getShader(gl,id){
+	var shaderScript,theSource,currentChild,shader;
+
+	shaderScript=document.getElementById(id);
+	if(!shaderScript){
+		return null;
+	}
+
+	theSource='';
+	currentChild=shaderScript.firstChild;
+
+	while(currentChild){
+		if(currentChild.nodeType==currentChild.TEXT_NODE){
+			theSource+=currentChild.textContent;
+		}
+		currentChild=currentChild.nextSibling;
+	}
+
+	if(shaderScript.type=='x-shader/x-vertex'){
+		shader=gl.createShader(gl.VERTEX_SHADER);
+	}else if(shaderScript.type=='x-shader/x-fragment'){
+		shader=gl.createShader(gl.FRAGMENT_SHADER);
+	}else{
+		return null;
+	}
+
+	gl.shaderSource(shader,theSource);
+
+	gl.compileShader(shader);
+
+	if(!gl.getShaderParameter(shader,gl.COMPILE_STATUS)&&!gl.isContextLost()){
+		console.log('an error occurred compiling the shaders:'+gl.getShaderInfoLog(shader));
+		return null;
+	}
+	return shader;
+}
+
+
+
+
+
+</script>
+</head>
+<body>
+<div>
+	<canvas id='cv' width='640px' height='480px'></canvas>
+</div>
+<video id='video'>Your browser doesn't appear to support the HTML5 element.</video>
+</body>
+</html>

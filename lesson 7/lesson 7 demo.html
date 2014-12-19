@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>WebGL case</title>
+<style type="text/css">
+#fps{
+	position: absolute;
+	right:500px;
+	top: 0;
+	color: #0000ff;
+	display: none;
+}
+</style>
+<script type="text/javascript" src="webgl-debug.js"></script>
+<script type="text/javascript" src="../glMatrix-0.9.5.min.js"></script>
+<script src="webgl-utils.js"></script>
+<script id='shader-fs' type="x-shader/x-fragment">
+	precision mediump float;
+	uniform sampler2D uSampler;
+	uniform vec3 uLightPosition;
+	uniform vec3 uAmbientLightColor;//环境反射
+	uniform vec3 uDiffuseLightColor;//满反射
+	uniform vec3 uSpecularLightColor;//镜面反射
+
+	varying vec3 vNormalEye;
+	varying vec3 vPositionEye3;
+	varying vec2 vTextureCoordinates;
+
+	const float shininess=32.0;
+	void main(){
+		vec3 vectorToLightSource=normalize(uLightPosition - vPositionEye3);
+
+		float diffuseLightWeighting=max(dot(vNormalEye,vectorToLightSource),0.0);
+
+		vec3 reflectionVector=normalize(reflect(-vectorToLightSource,vNormalEye));
+		vec3 viewVectorEye= -normalize(vPositionEye3);
+		float rdotv=max(dot(reflectionVector,viewVectorEye),0.0);
+		float specularLightWeighting=pow(rdotv,shininess);
+		vec4 texelColor=texture2D(uSampler,vTextureCoordinates);
+		
+		vec3 lightWeighting= uAmbientLightColor+uDiffuseLightColor*diffuseLightWeighting+uSpecularLightColor*specularLightWeighting;
+		gl_FragColor=vec4(lightWeighting.rgb*texelColor.rgb,texelColor.a);
+	}
+</script>
+<script id='shader-vs' type="x-shader/x-vertex">
+	attribute vec3 aVertexPosition;
+	attribute vec3 aVertexNormal;
+	attribute vec2 aTextureCoordinates;
+
+	uniform mat4 uMVMatrix;
+	uniform mat4 uPMatrix;
+	uniform mat3 uNMatrix;
+
+	varying vec3 vNormalEye;
+	varying vec3 vPositionEye3;
+	varying vec2 vTextureCoordinates;
+
+	void main(void){
+		vec4 vertexPositionEye4=uMVMatrix * vec4(aVertexPosition,1.0);
+		vPositionEye3=vertexPositionEye4.xyz/vertexPositionEye4.w;
+
+		vNormalEye=normalize(uNMatrix * aVertexNormal);
+
+		gl_Position=uPMatrix * uMVMatrix * vec4(aVertexPosition,1.0);
+		vTextureCoordinates=aTextureCoordinates;
+	}
+</script>
+
+<script type="text/javascript" src="lesson7Demo.js"></script>
+</head>
+<body onload='init();'>
+<div>
+	
+	<canvas id='cv' width='640px' height='480px'></canvas>
+</div>
+<div id='fps'></div>
+<video id='video'>Your browser doesn't appear to support the HTML5 element.</video>
+</body>
+</html>

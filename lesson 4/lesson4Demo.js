@@ -16,7 +16,8 @@ function init(){
 	var cv=document.getElementById('cv');
 	cv.addEventListener('webglcontextlost',contextLostHandler);
 	cv.addEventListener('webglcontextRestored',restoredHandler);
-	initWebGL();
+	gl = WebGLDebugUtils.makeDebugContext(initWebGL());
+
 	if(gl){
 		gl.clearColor(0,0,0,1);
 		gl.enable(gl.DEPTH_TEST);
@@ -41,13 +42,15 @@ function restoredHandler(event){
 }
 
 function initWebGL(){
-	window.gl=null;
+	var _gl=null;
 	try{
-		gl=cv.getContext('webgl')|| canvas.getContext("experimental-webgl");
+		_gl=cv.getContext('webgl')|| cv.getContext("experimental-webgl");
 	}catch(e){
 		
 	}
-	if(!gl){alert('web browser is not support WebGL.')}
+	if(!_gl){alert('web browser is not support WebGL.')}else{
+		return _gl;
+	}
 }
 
 function initShaders(){
@@ -294,6 +297,13 @@ function drawScene(){
 
 	mat4.perspective(60,640/480,0.1,100,projectViewMatrix);
 	mat4.identity(modelViewMatrix);
+	/*设置透视投影的矩阵
+		第一个参数 视域垂直范围
+		第一个参数 纵横比(视口宽/视口高)
+		第三个参数 近平面离观察者距离
+		第四个参数 远平面离观察者距离
+		第五个参数 投影矩阵
+	*/
 	mat4.lookAt([0,5,10],[0,0,0],[0,1,0],modelViewMatrix);
 
 	uploadMatrixToShader();

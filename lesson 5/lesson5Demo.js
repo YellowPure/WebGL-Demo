@@ -46,7 +46,71 @@ function init(){
 		initTexture();	
 
 		drawScene();
+		addEvent();
 	}
+}
+
+function changeMagTextureModel(target,value){
+	gl.bindTexture(gl.TEXTURE_2D, target);
+	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, value);
+	gl.bindTexture(gl.TEXTURE_2D, null);
+}
+
+function changeMinTextureModel(target,value){
+	gl.bindTexture(gl.TEXTURE_2D, target);
+	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, value);
+	gl.bindTexture(gl.TEXTURE_2D, null);
+}
+
+function addEvent(){
+	var btn1=document.getElementById('linear');
+	var btn2=document.getElementById('nearest');
+	var btn3=document.getElementById('linear_mipmap_nearest');
+	var btn4=document.getElementById('linear_mipmap_linear');
+	var btn5=document.getElementById('nearest_mipmap_linear');
+	var btn6=document.getElementById('nearest_mipmap_nearest');
+	var btn7=document.getElementById('mag_linear');
+	var btn8=document.getElementById('mag_nearest');
+	btn1.addEventListener('click',function(){
+		changeMinTextureModel(floorTexture,gl.LINEAR);
+		changeMinTextureModel(woodTexture,gl.LINEAR);
+		changeMinTextureModel(cubeTexture,gl.LINEAR);
+	});
+	btn2.addEventListener('click',function(){
+		changeMinTextureModel(floorTexture,gl.NEAREST);
+		changeMinTextureModel(woodTexture,gl.NEAREST);
+		changeMinTextureModel(cubeTexture,gl.NEAREST);
+	});
+	btn3.addEventListener('click',function(){
+		changeMinTextureModel(floorTexture,gl.LINEAR_MIPMAP_NEAREST);
+		changeMinTextureModel(woodTexture,gl.LINEAR_MIPMAP_NEAREST);
+		changeMinTextureModel(cubeTexture,gl.LINEAR_MIPMAP_NEAREST);
+	});
+	btn4.addEventListener('click',function(){
+		changeMinTextureModel(floorTexture,gl.LINEAR_MIPMAP_LINEAR);
+		changeMinTextureModel(woodTexture,gl.LINEAR_MIPMAP_LINEAR);
+		changeMinTextureModel(cubeTexture,gl.LINEAR_MIPMAP_LINEAR);
+	});
+	btn5.addEventListener('click',function(){
+		changeMinTextureModel(floorTexture,gl.NEAREST_MIPMAP_LINEAR);
+		changeMinTextureModel(woodTexture,gl.NEAREST_MIPMAP_LINEAR);
+		changeMinTextureModel(cubeTexture,gl.NEAREST_MIPMAP_LINEAR);
+	});
+	btn6.addEventListener('click',function(){
+		changeMinTextureModel(floorTexture,gl.NEAREST_MIPMAP_NEAREST);
+		changeMinTextureModel(woodTexture,gl.NEAREST_MIPMAP_NEAREST);
+		changeMinTextureModel(cubeTexture,gl.NEAREST_MIPMAP_NEAREST);
+	});
+	btn7.addEventListener('click',function(){
+		changeMagTextureModel(floorTexture,gl.LINEAR);
+		changeMagTextureModel(woodTexture,gl.LINEAR);
+		changeMagTextureModel(cubeTexture,gl.LINEAR);
+	});
+	btn8.addEventListener('click',function(){
+		changeMagTextureModel(floorTexture,gl.NEAREST);
+		changeMagTextureModel(woodTexture,gl.NEAREST);
+		changeMagTextureModel(cubeTexture,gl.NEAREST);
+	});
 }
 
 function contextLostHandler(event){
@@ -181,11 +245,12 @@ function initFloorBuffers(){
 
 	floorVertorTextureCoordinateBuffer=gl.createBuffer();
 	gl.bindBuffer(gl.ARRAY_BUFFER,floorVertorTextureCoordinateBuffer);
+	//纹理坐标数组
 	var textureCoordinates=[
-		2,0,
-		2,2,
-		0,2,
-		0,0
+		0,0,
+		0,3,
+		3,3,
+		3,0
 	]
 	gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(textureCoordinates),gl.STATIC_DRAW);
 	floorVertorTextureCoordinateBuffer.itemSize=2;
@@ -240,7 +305,7 @@ function initCubeBuffers(){
 	cubeVertexPositionBuffer.numberOfItems=24;
 
 	cubeVertorTextureCoordinateBuffer=gl.createBuffer();
-	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,cubeVertorTextureCoordinateBuffer);
+	gl.bindBuffer(gl.ARRAY_BUFFER,cubeVertorTextureCoordinateBuffer);
 	var cubeTextureCoordinates=[
 		//Front face
 	    0.0, 0.0, //v0
@@ -278,7 +343,7 @@ function initCubeBuffers(){
 	    1.0, 0.0, //v22
 	    0.0, 0.0, //v23
 	]
-	gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,new Float32Array(cubeTextureCoordinates),gl.STATIC_DRAW);
+	gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(cubeTextureCoordinates),gl.STATIC_DRAW);
 	cubeVertorTextureCoordinateBuffer.itemSize=2;
 	cubeVertorTextureCoordinateBuffer.numberOfItems=24;
 
@@ -392,7 +457,7 @@ function drawCube(texture){
 	gl.bindBuffer(gl.ARRAY_BUFFER,cubeVertexPositionBuffer);
 	gl.vertexAttribPointer(vertexPositionAttribute,cubeVertexPositionBuffer.itemSize,gl.FLOAT,false,0,0);
 
-	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,cubeVertorTextureCoordinateBuffer);
+	gl.bindBuffer(gl.ARRAY_BUFFER,cubeVertorTextureCoordinateBuffer);
 	gl.vertexAttribPointer(vertexTextureAttributeLoc,cubeVertorTextureCoordinateBuffer.itemSize,gl.FLOAT,false,0,0);
 
 	gl.activeTexture(gl.TEXTURE0);
@@ -475,7 +540,7 @@ function drawScene(){
 		第二个参数定义视图方向指向原点
 		第三个参数定义照相机向上方向为y轴正方向
 	*/
-	mat4.lookAt([8,5,-5],[0,0,0],[0,1,0],modelViewMatrix);
+	mat4.lookAt([-5,7,-5],[0,0,0],[0,1,0],modelViewMatrix);
 
 	uploadMatrixToShader();
 	drawFloor();
@@ -488,8 +553,8 @@ function drawScene(){
 	mvPopMatrix();
 
 	mvPushMatrix();
-	mat4.translate(modelViewMatrix,[0,2.7,0],modelViewMatrix);
-	mat4.scale(modelViewMatrix, [0.5, 0.5, 0.5], modelViewMatrix);
+	mat4.translate(modelViewMatrix,[0,3.2,0],modelViewMatrix);
+	// mat4.scale(modelViewMatrix, [2, 2, 2], modelViewMatrix);
 	uploadMatrixToShader();
 	drawCube(cubeTexture);
 	mvPopMatrix();

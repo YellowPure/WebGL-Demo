@@ -4,12 +4,12 @@
 <meta charset="utf-8">
 <title>WebGL case</title>
 <style type="text/css">
-#fps{
+*{padding: 0;margin: 0;}
+.fpsBox{
 	position: absolute;
-	right:500px;
+	left: 0;
 	top: 0;
-	color: #0000ff;
-	display: none;
+	color: #ffff00;
 }
 </style>
 <script id='shader-fs' type="x-shader/x-fragment">
@@ -34,6 +34,7 @@
 		vTextureCoordinates=aTextureCoordinates;
 	}
 </script>
+<script type="text/javascript" src="webgl-debug.js"></script>
 <script type="text/javascript" src="../glMatrix-0.9.5.min.js"></script>
 <script type="text/javascript" src="lesson6Demo.js"></script>
 </head>
@@ -42,7 +43,7 @@
 	
 	<canvas id='cv' width='640px' height='480px'></canvas>
 </div>
-<div id='fps'></div>
+<div class="fpsBox">fps:<span id='fps'></span></div>
 <video id='video'>Your browser doesn't appear to support the HTML5 element.</video>
 </body>
 </html>
